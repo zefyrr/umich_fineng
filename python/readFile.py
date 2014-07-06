@@ -84,9 +84,14 @@ def processPosition(pricedData, positionIndex):
 		
 		
 
-		underlyingLastDiff = (underlyingTick_t0.ask + underlyingTick_t1.ask) - (underlyingTick_t1.bid + underlyingTick_t0.bid)
-		optionLastDiff = (optionTick_t0.ask + optionTick_t1.ask) - (optionTick_t0.bid + optionTick_t1.bid)
+		underlyingLastDiff = (underlyingTick_t0.ask - underlyingTick_t1.ask) + (underlyingTick_t0.bid - underlyingTick_t1.bid)
+		optionLastDiff = (optionTick_t0.ask - optionTick_t1.ask) + (optionTick_t0.bid - optionTick_t1.bid)
 			
+
+
+		# underlyingLastDiff = underlyingTick_t0.last - underlyingTick_t1.last
+		# optionLastDiff = optionTick_t0.last - optionTick_t1.last
+
 		# Skipping deltas that have experienced no change
 		if underlyingLastDiff == 0 or optionLastDiff == 0:
 			print 'Skipping delta calculation at index (%d,%d), due to no change in quotes' % (i, i + 1)
@@ -101,7 +106,7 @@ def processPosition(pricedData, positionIndex):
 			
 			
 			deviation = abs(observedDelta - theoretical.delta)
-			deviationList.append({'id': theoretical.Id.numDataPoints, 'deviation': deviation})
+			deviationList.append({'id': theoretical.Id.numDataPoints, 'deviation': deviation, 'empirical': observedDelta, 'theoretical': theoretical.delta, 'stockLast': underlyingTick_t0.last})
 
 			#theoreticalPrice = theoretical.price
 		deviationList.sort(key = lambda x: x['deviation'])
