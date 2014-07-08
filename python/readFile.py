@@ -4,6 +4,9 @@ import argparse
 import fnmatch
 import tick_pb2 as proto
 import varint
+import matplotlib.pyplot as plt
+import math
+import time
 
 
 def getInstrumentIterator(input):
@@ -82,15 +85,23 @@ def processPosition(pricedData, positionIndex):
 		optionTick_t0 = pricedRecord_t0.pairedTick.optionTick
 		optionTick_t1 = pricedRecord_t1.pairedTick.optionTick
 		
+
 		
+
+		timeDiff = optionTick_t1.timestamp - optionTick_t0.timestamp
+		timeDiff =  timeDiff/1000
+
+		if timeDiff > (30 * 60):
+			print 'Skipping delta calculation at index (%d,%d), due to high time bound diff' % (i, i + 1), timeDiff
+			continue
+
 
 		underlyingLastDiff = (underlyingTick_t0.ask - underlyingTick_t1.ask) + (underlyingTick_t0.bid - underlyingTick_t1.bid)
 		optionLastDiff = (optionTick_t0.ask - optionTick_t1.ask) + (optionTick_t0.bid - optionTick_t1.bid)
 			
 
-
-		# underlyingLastDiff = underlyingTick_t0.last - underlyingTick_t1.last
 		# optionLastDiff = optionTick_t0.last - optionTick_t1.last
+		# underlyingLastDiff = underlyingTick_t0.last - underlyingTick_t1.last
 
 		# Skipping deltas that have experienced no change
 		if underlyingLastDiff == 0 or optionLastDiff == 0:
@@ -101,23 +112,48 @@ def processPosition(pricedData, positionIndex):
 
 
 		deviationList = []
+		theoreticalDeltas = []
+		indices = []
 		for j in range(len(pricedRecord_t0.theoreticals)):
 			theoretical = pricedRecord_t0.theoreticals[j]
 			
+			if math.isnan(theoretical.delta):
+				continue
 			
-			deviation = abs(observedDelta - theoretical.delta)
+			deviation = abs(observedDelta / theoretical.delta)
 			deviationList.append({'id': theoretical.Id.numDataPoints, 'deviation': deviation, 'empirical': observedDelta, 'theoretical': theoretical.delta, 'stockLast': underlyingTick_t0.last})
+			theoreticalDeltas.append(theoretical.delta)
+			indices.append(theoretical.Id.numDataPoints)
+
 
 			#theoreticalPrice = theoretical.price
 		deviationList.sort(key = lambda x: x['deviation'])
 
-		print deviationList[:10]
+
+		print observedDelta, timeDiff
+		print optionTick_t0.ask, optionTick_t0.bid, underlyingTick_t0.ask, underlyingTick_t0.bid, optionTick_t0.timestampStr
+		print optionTick_t1.ask, optionTick_t1.bid, underlyingTick_t1.ask, underlyingTick_t1.bid, optionTick_t1.timestampStr
+		#print deviationList[-10:]
+		#plt.plot(indices, theoreticalDeltas, 'ro')
+		#plt.show()
+
 
 
 
 
 def processInstrument(optionMeta, pricedData):
+	print '------------\n'
 	print 'Processing -', optionMeta
+	timestamp = optionMeta.expirationDate/1000
+	print time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(timestamp))
+	print 'Num available ticks - %d' % (len(pricedData))
+
+
+	firstPricedRecord = pricedData[0]
+	if firstPricedRecord.pairedTick.daysToExpire < 12:
+		print 'Skipping option due, as it is in expiry window threshold'
+		return
+
 
 	positions = createPositions(pricedData)
 	if len(positions) == 0:
@@ -126,6 +162,7 @@ def processInstrument(optionMeta, pricedData):
 
 	for positionIndex in positions:
 		processPosition(pricedData, positionIndex)
+
 
 
 
@@ -149,6 +186,7 @@ def main():
     		print 'Processing file -', pricedDataFile 
     		for (optionMeta, pricedData) in getInstrumentIterator(pricedDataFile):
     			processInstrument(optionMeta, pricedData)
+    			raw_input('Press enter to continue')
 
  
 
