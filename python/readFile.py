@@ -2,43 +2,11 @@ import os, re, subprocess
 import fileinput, time
 import argparse
 import fnmatch
-import tick_pb2 as proto
-import varint
 import matplotlib.pyplot as plt
 import math
 import time
+from readProto import getInstrumentIterator
 
-
-def getInstrumentIterator(input):
-	inputFh = open(input, "rb")
-	data  = inputFh.read()
-	decoder = varint.decodeVarint32
-	next_pos, pos = 0, 0
-	# Loop to read each pricedData object in the file
-
-	pricedData = []
-	lastOptionMeta = None
-	while 1:
-		pricedRecord = proto.PricedRecord()
-
-		try:
-			next_pos, pos = decoder(data, pos)
-		except:
-			break
-		pricedRecord.ParseFromString(data[pos:pos + next_pos])
-		pos += next_pos
-
-		optionMeta = pricedRecord.pairedTick.optionMeta
-		if lastOptionMeta:
-			if lastOptionMeta.instrument !=  optionMeta.instrument:
-				yield (lastOptionMeta, pricedData)
-				pricedData = []
-
-		pricedData.append(pricedRecord)
-		lastOptionMeta = optionMeta
-
-	inputFh.close()
-	yield (lastOptionMeta, pricedData)
 
 
 def getTimeInSecs(timeStr):
@@ -129,6 +97,8 @@ def processPosition(pricedData, positionIndex):
 			#theoreticalPrice = theoretical.price
 		deviationList.sort(key = lambda x: x['deviation'])
 
+		if observedDelta  > 0 and observedDelta < 1:
+			continue
 
 		print observedDelta, timeDiff
 		print optionTick_t0.ask, optionTick_t0.bid, underlyingTick_t0.ask, underlyingTick_t0.bid, optionTick_t0.timestampStr
@@ -183,7 +153,8 @@ def main():
     for root, dirnames, filenames in os.walk(args.datadir):
     	for filename in fnmatch.filter(filenames, 'option_tick_priced.proto'):
     		pricedDataFile = root + "/" + filename
-    		print 'Processing file -', pricedDataFile 
+    		print 'Processing file -', pricedDataFile
+
     		for (optionMeta, pricedData) in getInstrumentIterator(pricedDataFile):
     			processInstrument(optionMeta, pricedData)
     			raw_input('Press enter to continue')
