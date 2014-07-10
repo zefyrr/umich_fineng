@@ -26,13 +26,18 @@ def processInstrument(optionMeta, pricedData):
 	return computeEmpiricals(pricedData, (0, len(pricedData) - 1))
 
 
+# class PointBrowser:
+#     def __init__(self, ):
+
+
 
 def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 
 	fig, plots = plt.subplots(2, sharex=True)
 
 	timestamps = []
-	deltas = []
+	spreadDeltas = []
+	lastDeltas = []
 	optionPrices = []
 	stockPrices = []
 
@@ -40,9 +45,12 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 		timestamps.extend(map(lambda x: x['timestamp'], empiricalData))
 		timestamps.append(timestamps[-1])
 		
-		deltas.extend(map(lambda x: x['delta']['spread'], empiricalData))
-		deltas.append(np.nan)
+		spreadDeltas.extend(map(lambda x: x['delta']['spread'], empiricalData))
+		spreadDeltas.append(np.nan)
 		
+		lastDeltas.extend(map(lambda x: x['delta']['last'], empiricalData))
+		lastDeltas.append(np.nan)
+
 		optionPrices.extend(map(lambda x: x['optionTick'].last, empiricalData))
 		optionPrices.append(np.nan)
 		
@@ -51,7 +59,8 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 
 	stockPrices = pandas.Series(stockPrices)
 	optionPrices = pandas.Series(optionPrices)
-	deltas = pandas.Series(deltas)
+	lastDeltas = pandas.Series(lastDeltas)
+	spreadDeltas = pandas.Series(spreadDeltas)
 	timestamps = pandas.tseries.tools.to_datetime(timestamps, unit='ms')
 
 
@@ -61,7 +70,11 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 	plotDelta.grid(True)
 	plotPrices.grid(True)
 
-	plotDelta.scatter(timestamps, deltas)
+	plotDeltaSpread = plotDelta
+	plotDeltaSpread.scatter(timestamps, spreadDeltas, marker='s', color='k')
+
+	plotDeltaLast = plotDelta.twinx()
+	plotDeltaLast.scatter(timestamps, lastDeltas, marker='x', color='g')
 
 	plotOptionPrices = plotPrices
 	plotOptionPrices.plot(timestamps, optionPrices, linestyle='-', marker='o', color='b')
