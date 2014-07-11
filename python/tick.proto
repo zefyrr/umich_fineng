@@ -1,0 +1,66 @@
+package ncllc.protos;
+
+option java_package = "com.ncllc.protos";
+option java_outer_classname = "Protos";
+
+enum OptionType {
+        CALL = 1;
+        PUT = 2;
+  }
+
+
+
+enum TickPosition{
+    START = 1;
+    END = 2;
+    ACTIVE = 3;
+}
+
+message Tick {
+	optional int64 timestamp = 1;
+    optional double last = 2;
+    optional int64 lastSize = 3;
+    optional int64 totalVolume = 4;
+    optional double bid = 5;
+    optional double ask = 6;
+    optional int64 tickId = 7;
+    optional int64 bidSize = 8;
+    optional int64 askSize = 9;
+    optional string basisForLast = 10;
+    optional TickPosition tickPosition = 11;
+    optional string instrument = 12;
+    optional string timestampStr = 13;
+}
+
+message OptionMeta {
+    optional OptionType optionType = 1;
+    optional int64 expirationDate = 2;
+    optional double strike = 4;
+    optional string instrument = 5;
+}
+
+message PairedTick {
+    optional Tick optionTick = 1;
+    optional Tick underlyingTick = 2;
+    optional OptionMeta optionMeta = 3;
+    optional double interestRate = 4;
+    optional int64 daysToExpire = 5;
+    optional bool isPriceable = 6;
+}
+
+message Id {
+    optional int32 numDataPoints = 6;
+}
+
+message Theoretical {
+    optional Id Id = 1;
+    optional double price = 2;
+    optional double delta = 3;
+}
+
+message PricedRecord {
+    optional PairedTick pairedTick = 1;
+    repeated Theoretical theoreticals = 2;
+}
+
+
