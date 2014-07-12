@@ -1,8 +1,8 @@
 import time
 
 
-def getTimeGMTFromUTCEpoch(epochs):
-	return time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(epochs/1000))
+def getDateGMTFromUTCEpoch(epochs):
+	return time.strftime('%Y-%m-%d', time.gmtime(epochs/1000))
 
 
 def getTimeInSecs(timeStr):
@@ -11,4 +11,4 @@ def getTimeInSecs(timeStr):
 	return timeSecs
 
 def getInstrumentMetaStr(optionMeta):
-	return '%s %f %s' % (optionMeta.instrument, optionMeta.strike, getTimeGMTFromUTCEpoch(optionMeta.expirationDate))
+	return '%s %.3f %s' % (optionMeta.instrument, optionMeta.strike, getDateGMTFromUTCEpoch(optionMeta.expirationDate))

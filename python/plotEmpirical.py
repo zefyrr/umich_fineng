@@ -6,15 +6,29 @@ import matplotlib.pyplot as plt
 import math, pandas
 import time
 from readProto import getInstrumentIterator
-from utils import getTimeGMTFromUTCEpoch, getTimeInSecs, getInstrumentMetaStr
+from utils import getDateGMTFromUTCEpoch, getTimeInSecs, getInstrumentMetaStr
 from empiricalDelta import computeEmpiricals
 import itertools
-import numpy as np
 
+
+class TheoreticalBrowser:
+	def __init__(self, theoreticals, plot):
+		print 'instantiating', self
+		self.theoreticals = theoreticals
+		self.plot = plot
+
+	def onPick(self, event):
+		if event.artist!=line: return True
+		print 'trying to print event', event
+		index = len(event.ind)
+		if not index: 
+			return True
+
+		print index
 
 def processInstrument(optionMeta, pricedData):
 
-	instrumentMeta = '%s %f %s' % (optionMeta.instrument, optionMeta.strike, getTimeGMTFromUTCEpoch(optionMeta.expirationDate))
+	instrumentMeta = '%s %f %s' % (optionMeta.instrument, optionMeta.strike, getDateGMTFromUTCEpoch(optionMeta.expirationDate))
 
 	print 'Processing -', instrumentMeta, 'ticks -', len(pricedData)
 	firstPricedRecord = pricedData[0]
@@ -25,11 +39,12 @@ def processInstrument(optionMeta, pricedData):
 
 	return computeEmpiricals(pricedData, (0, len(pricedData) - 1))
 
-
-# class PointBrowser:
-#     def __init__(self, ):
-
-
+def onpick(event):
+	thisline = event.artist
+	xdata = thisline.get_xdata()
+	ydata = thisline.get_ydata()
+	ind = event.ind
+	print 'onpick points:', zip(xdata[ind], ydata[ind])
 
 def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 
@@ -43,19 +58,19 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 
 	for empiricalData in processedDataList:
 		timestamps.extend(map(lambda x: x['timestamp'], empiricalData))
-		timestamps.append(timestamps[-1])
+		timestamps.append(None)
 		
 		spreadDeltas.extend(map(lambda x: x['delta']['spread'], empiricalData))
-		spreadDeltas.append(np.nan)
+		spreadDeltas.append(None)
 		
 		lastDeltas.extend(map(lambda x: x['delta']['last'], empiricalData))
-		lastDeltas.append(np.nan)
+		lastDeltas.append(None)
 
 		optionPrices.extend(map(lambda x: x['optionTick'].last, empiricalData))
-		optionPrices.append(np.nan)
+		optionPrices.append(None)
 		
 		stockPrices.extend(map(lambda x: x['underlyingTick'].last, empiricalData))
-		stockPrices.append(np.nan)
+		stockPrices.append(None)
 
 	stockPrices = pandas.Series(stockPrices)
 	optionPrices = pandas.Series(optionPrices)
@@ -65,25 +80,44 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 
 
 	plotDelta = plots[0]
-	plotPrices = plots[1]
-
+	plotDelta.set_title('Empirical Deltas')
 	plotDelta.grid(True)
+
+	plotPrices = plots[1]
+	plotPrices.set_title('Prices')
 	plotPrices.grid(True)
 
+
 	plotDeltaSpread = plotDelta
-	plotDeltaSpread.scatter(timestamps, spreadDeltas, marker='s', color='k')
+	plotDeltaSpread.scatter(timestamps, spreadDeltas, marker='s', color='k', label='spread')
+	plotDeltaSpread.set_ylabel('spread')
+	plotDeltaSpread.legend(loc='upper left', fancybox=True)
+
 
 	plotDeltaLast = plotDelta.twinx()
-	plotDeltaLast.scatter(timestamps, lastDeltas, marker='x', color='g')
+	plotDeltaLast.scatter(timestamps, lastDeltas, marker='x', color='g', label='last')
+	plotDeltaLast.set_ylabel('last')
+	plotDeltaLast.legend(loc='upper right', fancybox=True)
 
-	plotOptionPrices = plotPrices
-	plotOptionPrices.plot(timestamps, optionPrices, linestyle='-', marker='o', color='b')
 
-	plotStockPrices = plotOptionPrices.twinx()
-	plotStockPrices.plot(timestamps, stockPrices, linestyle='-', marker='d', color='r')
+	plotStockPrices = plotPrices
+	plotStockPrices.plot(timestamps, stockPrices, linestyle='-', marker='d', color='r', label='stock')
+	plotStockPrices.set_ylabel('stock')
+	plotStockPrices.legend(loc='upper right', fancybox=True)
+
+	plotOptionPrices = plotPrices.twinx()
+	line, = plotOptionPrices.plot(timestamps, optionPrices, linestyle='-', marker='o', color='b', label='option', picker=5)
+	plotOptionPrices.set_ylabel('option')
+	plotOptionPrices.legend(loc='upper left', fancybox=True)
+
+
+	plotPrices.set_xlabel(instrumentMeta, fontsize=14)
+
+	browser = TheoreticalBrowser(None, None)
+
+	fig.canvas.mpl_connect('pick_event', onpick)
 
 	fig.autofmt_xdate(bottom=0.2, rotation=35, ha='right')
-	plt.title(instrumentMeta)
 	plt.show()
 
 

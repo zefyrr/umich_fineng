@@ -24,7 +24,6 @@ def getInstrumentIterator(pricedFile, instrumentFilter=None):
 		if instrumentFilter and optionMeta.instrument not in instrumentFilter:
 			continue
 
-
 		pricedData.append(pricedRecord)
 
 	if len(pricedData) > 0:
