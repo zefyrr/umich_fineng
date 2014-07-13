@@ -13,10 +13,14 @@ import numpy as np
 
 
 class TheoreticalBrowser:
-	def __init__(self, theoreticals, plot, line):
+	def __init__(self, theoreticals, theoreticalPlot, line, fig):
 		self.theoreticals = theoreticals
-		self.plot = plot
+
+		self.plotDelta = theoreticalPlot
+		self.plotPrices = theoreticalPlot.twinx()
+
 		self.line = line
+		self.fig = fig
 
 	def onPick(self, event):
 		if event.artist != self.line: 
@@ -27,17 +31,32 @@ class TheoreticalBrowser:
 		if not index: 
 			return True
 
-		print index, event.ind
-		thisline = event.artist
-		xdata = thisline.get_xdata()
-		ydata = thisline.get_ydata()
-		ind = event.ind
-		print 'onpick points:', zip(xdata[ind], ydata[ind])
+
+		tickIndex = event.ind[0]
+		theoreticalsForTick = self.theoreticals[tickIndex]
+
+		prices = map(lambda x: x.price, theoreticalsForTick)
+		deltas = map(lambda x: x.delta, theoreticalsForTick)
+		ids = map(lambda x: x.Id.numDataPoints, theoreticalsForTick)
+
+		self.plotDelta.cla()
+		self.plotDelta.set_title('Theoreticals')
+		self.plotDelta.grid(True)
+		self.plotDelta.plot(ids, deltas, color='k', label='delta')
+		self.plotDelta.set_ylabel('delta')
+		self.plotDelta.legend(loc='upper left', fancybox=True)
+
+		self.plotPrices.cla()
+		self.plotPrices.grid(True)
+		self.plotPrices.plot(ids, prices, color='b', label='price')
+		self.plotPrices.set_ylabel('price')
+		self.plotPrices.legend(loc='upper right', fancybox=True)
+
+		self.fig.canvas.draw()
+
 
 def processInstrument(optionMeta, pricedData):
-
-	instrumentMeta = '%s %f %s' % (optionMeta.instrument, optionMeta.strike, getDateGMTFromUTCEpoch(optionMeta.expirationDate))
-
+	instrumentMeta = getInstrumentMetaStr(optionMeta)
 	print 'Processing -', instrumentMeta, 'ticks -', len(pricedData)
 	firstPricedRecord = pricedData[0]
 
@@ -63,8 +82,6 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 	plotDelta.grid(True)
 
 	plotTheoreticals = fig.add_subplot(313)
-	plotTheoreticals.set_title('Theoreticals')
-	plotTheoreticals.grid(True)
 
 
 	timestamps = []
@@ -123,13 +140,8 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 	plotOptionPrices.legend(loc='upper left', fancybox=True)
 
 
-	t = np.arange(0.0, 2.0, 0.01)
-	s1 = np.sin(2 * np.pi * t)
-	s2 = np.sin(4 * np.pi * t)
-	plotTheoreticals.plot(t, s1)
 
-
-	browser = TheoreticalBrowser(None, None, line)
+	browser = TheoreticalBrowser(theoreticals, plotTheoreticals, line, fig)
 
 	fig.canvas.mpl_connect('pick_event', browser.onPick)
 
