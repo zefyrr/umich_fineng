@@ -11,4 +11,4 @@ def getTimeInSecs(timeStr):
 	return timeSecs
 
 def getInstrumentMetaStr(optionMeta):
-	return '%s %.3f %s' % (optionMeta.instrument, optionMeta.strike, getDateGMTFromUTCEpoch(optionMeta.expirationDate))
+	return '%s - %.3f - %s' % (optionMeta.instrument, optionMeta.strike, getDateGMTFromUTCEpoch(optionMeta.expirationDate))

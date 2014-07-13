@@ -9,22 +9,30 @@ from readProto import getInstrumentIterator
 from utils import getDateGMTFromUTCEpoch, getTimeInSecs, getInstrumentMetaStr
 from empiricalDelta import computeEmpiricals
 import itertools
+import numpy as np
 
 
 class TheoreticalBrowser:
-	def __init__(self, theoreticals, plot):
-		print 'instantiating', self
+	def __init__(self, theoreticals, plot, line):
 		self.theoreticals = theoreticals
 		self.plot = plot
+		self.line = line
 
 	def onPick(self, event):
-		if event.artist!=line: return True
-		print 'trying to print event', event
+		if event.artist != self.line: 
+			return True
+
 		index = len(event.ind)
+
 		if not index: 
 			return True
 
-		print index
+		print index, event.ind
+		thisline = event.artist
+		xdata = thisline.get_xdata()
+		ydata = thisline.get_ydata()
+		ind = event.ind
+		print 'onpick points:', zip(xdata[ind], ydata[ind])
 
 def processInstrument(optionMeta, pricedData):
 
@@ -39,22 +47,32 @@ def processInstrument(optionMeta, pricedData):
 
 	return computeEmpiricals(pricedData, (0, len(pricedData) - 1))
 
-def onpick(event):
-	thisline = event.artist
-	xdata = thisline.get_xdata()
-	ydata = thisline.get_ydata()
-	ind = event.ind
-	print 'onpick points:', zip(xdata[ind], ydata[ind])
 
 def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 
-	fig, plots = plt.subplots(2, sharex=True)
+	fig = plt.figure()
+	fig.suptitle(instrumentMeta,  fontsize=18, fontweight='bold')
+
+	plotPrices = fig.add_subplot(311)
+	plotPrices.set_title('Prices')
+	plotPrices.grid(True)
+
+
+	plotDelta = fig.add_subplot(312, sharex=plotPrices)
+	plotDelta.set_title('Empirical Deltas')
+	plotDelta.grid(True)
+
+	plotTheoreticals = fig.add_subplot(313)
+	plotTheoreticals.set_title('Theoreticals')
+	plotTheoreticals.grid(True)
+
 
 	timestamps = []
 	spreadDeltas = []
 	lastDeltas = []
 	optionPrices = []
 	stockPrices = []
+	theoreticals = []
 
 	for empiricalData in processedDataList:
 		timestamps.extend(map(lambda x: x['timestamp'], empiricalData))
@@ -72,20 +90,15 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 		stockPrices.extend(map(lambda x: x['underlyingTick'].last, empiricalData))
 		stockPrices.append(None)
 
+		theoreticals.extend(map(lambda x: x['theoreticals'], empiricalData))
+		theoreticals.append(None)
+
+
 	stockPrices = pandas.Series(stockPrices)
 	optionPrices = pandas.Series(optionPrices)
 	lastDeltas = pandas.Series(lastDeltas)
 	spreadDeltas = pandas.Series(spreadDeltas)
 	timestamps = pandas.tseries.tools.to_datetime(timestamps, unit='ms')
-
-
-	plotDelta = plots[0]
-	plotDelta.set_title('Empirical Deltas')
-	plotDelta.grid(True)
-
-	plotPrices = plots[1]
-	plotPrices.set_title('Prices')
-	plotPrices.grid(True)
 
 
 	plotDeltaSpread = plotDelta
@@ -99,7 +112,6 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 	plotDeltaLast.set_ylabel('last')
 	plotDeltaLast.legend(loc='upper right', fancybox=True)
 
-
 	plotStockPrices = plotPrices
 	plotStockPrices.plot(timestamps, stockPrices, linestyle='-', marker='d', color='r', label='stock')
 	plotStockPrices.set_ylabel('stock')
@@ -111,11 +123,15 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 	plotOptionPrices.legend(loc='upper left', fancybox=True)
 
 
-	plotPrices.set_xlabel(instrumentMeta, fontsize=14)
+	t = np.arange(0.0, 2.0, 0.01)
+	s1 = np.sin(2 * np.pi * t)
+	s2 = np.sin(4 * np.pi * t)
+	plotTheoreticals.plot(t, s1)
 
-	browser = TheoreticalBrowser(None, None)
 
-	fig.canvas.mpl_connect('pick_event', onpick)
+	browser = TheoreticalBrowser(None, None, line)
+
+	fig.canvas.mpl_connect('pick_event', browser.onPick)
 
 	fig.autofmt_xdate(bottom=0.2, rotation=35, ha='right')
 	plt.show()

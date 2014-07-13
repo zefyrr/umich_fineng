@@ -20,7 +20,7 @@ def computeEmpiricals(pricedData, positionIndex):
 		empiricalRecord['optionTick'] = optionTick_t1
 		empiricalRecord['underlyingTick'] = underlyingTick_t1
 		empiricalRecord['underlyingTick'] = underlyingTick_t1
-		# empiricalRecord['theoreticals'] = pricedRecord_t0.theoreticals
+		empiricalRecord['theoreticals'] = pricedRecord_t0.theoreticals
 		empiricalRecord['delta'] = {}
 
 
