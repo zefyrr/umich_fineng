@@ -12,9 +12,11 @@ import itertools
 import numpy as np
 
 
-class TheoreticalBrowser:
-	def __init__(self, theoreticals, theoreticalPlot, line, fig):
+class DataBrowser:
+	def __init__(self, optionTicks, stockTicks, theoreticals, theoreticalPlot, line, fig):
 		self.theoreticals = theoreticals
+		self.optionTicks = optionTicks
+		self.stockTicks = stockTicks
 
 		self.plotDelta = theoreticalPlot
 		self.plotPrices = theoreticalPlot.twinx()
@@ -34,6 +36,15 @@ class TheoreticalBrowser:
 
 		tickIndex = event.ind[0]
 		theoreticalsForTick = self.theoreticals[tickIndex]
+		optionTick = self.optionTicks[tickIndex]
+		stockTick = self.stockTicks[tickIndex]
+
+
+		optionTickStr = 'option - %s' % ' '.join(str(optionTick).split('\n'))
+		stockTickStr = 'stock - %s' % ' '.join(str(stockTick).split('\n'))
+
+		textstr = optionTickStr + '\n' + stockTickStr
+
 
 		prices = map(lambda x: x.price, theoreticalsForTick)
 		deltas = map(lambda x: x.delta, theoreticalsForTick)
@@ -90,6 +101,8 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 	optionPrices = []
 	stockPrices = []
 	theoreticals = []
+	optionTicks = []
+	stockTicks = []
 
 	for empiricalData in processedDataList:
 		timestamps.extend(map(lambda x: x['timestamp'], empiricalData))
@@ -103,9 +116,15 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 
 		optionPrices.extend(map(lambda x: x['optionTick'].last, empiricalData))
 		optionPrices.append(None)
+
+		optionTicks.extend(map(lambda x: x['optionTick'], empiricalData))
+		optionTicks.append(None)
 		
 		stockPrices.extend(map(lambda x: x['underlyingTick'].last, empiricalData))
 		stockPrices.append(None)
+
+		stockTicks.extend(map(lambda x: x['underlyingTick'], empiricalData))
+		stockTicks.append(None)
 
 		theoreticals.extend(map(lambda x: x['theoreticals'], empiricalData))
 		theoreticals.append(None)
@@ -141,7 +160,7 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 
 
 
-	browser = TheoreticalBrowser(theoreticals, plotTheoreticals, line, fig)
+	browser = DataBrowser(optionTicks, stockTicks, theoreticals, plotTheoreticals, line, fig)
 
 	fig.canvas.mpl_connect('pick_event', browser.onPick)
 
