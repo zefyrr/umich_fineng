@@ -76,14 +76,15 @@ def processPosition(optionMeta, pricedData, positionIndex):
         DeltaRankIndex = []
         counter = 0            
         writer = csv.writer(open('sankethlist.csv','wb'))
-        writer.writerow(['instrument', 'timestamp','id', 'deviation', 'deviation with central', 'empirical', 'emp with central', 'theoretical', 'gamma', 'stockLast'])
+        writer.writerow(['instrument', 'timestamp','id', 'deviation', 'empirical delta', 'theoretical delta', 'gamma', 'stockLast'])
 	for p in range(startPositionIndex, endPositionIndex):
             timeSecsCurrent = getTimeInSecs(pricedRecord.pairedTick.optionTick.timestampStr.split(' ')[p+1])
             timeSecsPrevious = getTimeInSecs(pricedRecord.pairedTick.optionTick.timestampStr.split(' ')[p])
-            if timeSecsCurrent-timeSecsPrevious < getTimeInSecs('00:30:00')
+            timeDiff = timeSecsCurrent-timeSecsPrevious
+            if timeDiff < getTimeInSecs('00:30:00'):
                 counter = counter + 1
-            else 
-                if counter = 1                    
+            else:
+                if counter == 1:                    
                     pricedRecord_t0 = pricedData[counter-1]
 		    pricedRecord_t1 = pricedData[counter]
 
@@ -106,38 +107,52 @@ def processPosition(optionMeta, pricedData, positionIndex):
 
 		    observedDelta = optionLastDiff/underlyingLastDiff
 
-                    observedGamma = 
+                    observedGamma = 0.25
 
-                 else if counter = 2   
-                    pricedRecord_t0 = pricedData[counter-2]
-		    pricedRecord_t1 = pricedData[counter-1]
-                    pricedRecord_t2 = pricedData[counter]
+                else: 
+                    if counter >= 2:   
+                        pricedRecord_t0 = pricedData[counter-2]
+		        pricedRecord_t1 = pricedData[counter-1]
+                        pricedRecord_t2 = pricedData[counter]
 
-                    underlyingTick_t0 = pricedRecord_t0.pairedTick.underlyingTick
-		    underlyingTick_t1 = pricedRecord_t1.pairedTick.underlyingTick
-                    underlyingTick_t2 = pricedRecord_t2.pairedTick.underlyingTick
+                        underlyingTick_t0 = pricedRecord_t0.pairedTick.underlyingTick
+		        underlyingTick_t1 = pricedRecord_t1.pairedTick.underlyingTick
+                        underlyingTick_t2 = pricedRecord_t2.pairedTick.underlyingTick
 
-                    optionTick_t0 = pricedRecord_t0.pairedTick.optionTick
-		    optionTick_t1 = pricedRecord_t1.pairedTick.optionTick
-                    optionTick_t2 = pricedRecord_t2.pairedTick.optionTick
+                        optionTick_t0 = pricedRecord_t0.pairedTick.optionTick
+		        optionTick_t1 = pricedRecord_t1.pairedTick.optionTick
+                        optionTick_t2 = pricedRecord_t2.pairedTick.optionTick
 
+                        underlyingLastDiff = (underlyingTick_t1.last - underlyingTick_t0.last)
+                        optionLastDiff = (optionTick_t1.last - optionTick_t0.last)
 
+                        if underlyingLastDiff == 0 or optionLastDiff == 0:
+			 print 'Skipping delta calculation at index (%d,%d), due to no change in quotes' % (i, i + 1)
+			 continue
 
-                else if counter >= 3
-                    pricedRecord_t0 = pricedData[counter-3]
-		    pricedRecord_t1 = pricedData[counter-2]
-                    pricedRecord_t2 = pricedData[counter-1]
-                    pricedRecord_t3 = pricedData[counter]
+                        if distOne == 0 or distTwo == 0:
+			 print 'Skipping delta calculation at index (%d,%d), due to no change in quotes' % (i, i + 1)
+			 continue
 
-		    underlyingTick_t0 = pricedRecord_t0.pairedTick.underlyingTick
-		    underlyingTick_t1 = pricedRecord_t1.pairedTick.underlyingTick
-                    underlyingTick_t2 = pricedRecord_t2.pairedTick.underlyingTick
-                    underlyingTick_t3 = pricedRecord_t3.pairedTick.underlyingTick
+		        observedDelta = optionLastDiff/underlyingLastDiff
 
-		    optionTick_t0 = pricedRecord_t0.pairedTick.optionTick
-		    optionTick_t1 = pricedRecord_t1.pairedTick.optionTick
-                    optionTick_t2 = pricedRecord_t2.pairedTick.optionTick
-                    optionTick_t3 = pricedRecord_t3.pairedTick.optionTick	           	           
+                        observedGamma = 0.5
+
+#                else if counter >= 3
+#                    pricedRecord_t0 = pricedData[counter-3]
+#		    pricedRecord_t1 = pricedData[counter-2]
+#                    pricedRecord_t2 = pricedData[counter-1]
+#                    pricedRecord_t3 = pricedData[counter]
+#
+#		    underlyingTick_t0 = pricedRecord_t0.pairedTick.underlyingTick
+#		    underlyingTick_t1 = pricedRecord_t1.pairedTick.underlyingTick
+#                    underlyingTick_t2 = pricedRecord_t2.pairedTick.underlyingTick
+#                    underlyingTick_t3 = pricedRecord_t3.pairedTick.underlyingTick
+#
+#		    optionTick_t0 = pricedRecord_t0.pairedTick.optionTick
+#		    optionTick_t1 = pricedRecord_t1.pairedTick.optionTick
+#                    optionTick_t2 = pricedRecord_t2.pairedTick.optionTick
+#                    optionTick_t3 = pricedRecord_t3.pairedTick.optionTick	           	           
 		  
 
 		#underlyingLastDiff = (underlyingTick_t0.ask - underlyingTick_t1.ask) + (underlyingTick_t0.bid - underlyingTick_t1.bid)
@@ -156,15 +171,15 @@ def processPosition(optionMeta, pricedData, positionIndex):
 		# optionLastDiff = optionTick_t0.last - optionTick_t1.last
 
 		# Skipping deltas that have experienced no change
-		if underlyingLastDiff == 0 or optionLastDiff == 0:
-			print 'Skipping delta calculation at index (%d,%d), due to no change in quotes' % (i, i + 1)
-			continue
-
-                if distOne == 0 or distTwo == 0:
-			print 'Skipping delta calculation at index (%d,%d), due to no change in quotes' % (i, i + 1)
-			continue
-
-		observedDelta = optionLastDiff/underlyingLastDiff
+#		if underlyingLastDiff == 0 or optionLastDiff == 0:
+#			print 'Skipping delta calculation at index (%d,%d), due to no change in quotes' % (i, i + 1)
+#			continue
+#
+#                if distOne == 0 or distTwo == 0:
+#			print 'Skipping delta calculation at index (%d,%d), due to no change in quotes' % (i, i + 1)
+#			continue
+#
+#		observedDelta = optionLastDiff/underlyingLastDiff
                 
                 #opt_t0 = (optionTick_t0.ask + optionTick_t0.bid)/2                
                 #opt_t1 = (optionTick_t1.ask + optionTick_t1.bid)/2
@@ -177,24 +192,24 @@ def processPosition(optionMeta, pricedData, positionIndex):
                 #observedCentralDelta = (opt_t2 - ((distTwo/distOne)**2)*opt_t0 - (1 - (distTwo/distOne)**2)*opt_t1)/(distTwo*(1 + (distTwo/distOne)))
                 #observedCentralDelta2 = ((-distTwo)/((distOne)*(distOne + distTwo)))*opt                            
 
-                observedGamma = 2*(opt_t2 + (distTwo/distOne)*opt_t2 - (1+(distTwo/distOne))*opt_t1)/(distOne*distTwo*(1 + (distTwo/distOne)))
+                #observedGamma = 2*(opt_t2 + (distTwo/distOne)*opt_t2 - (1+(distTwo/distOne))*opt_t1)/(distOne*distTwo*(1 + (distTwo/distOne)))
                         
                                  		
                 #deviationList = []
-                deviationList = []
-		for j in range(len(pricedRecord_t1.theoreticals)):
-			theoretical = pricedRecord_t1.theoreticals[j]
+            deviationList = []
+            for j in range(len(pricedRecord_t1.theoreticals)):
+		theoretical = pricedRecord_t1.theoreticals[j]
 			
 			
-			deviation = abs(observedDelta - theoretical.delta)   #what if we take the relative deviation instead of absolute
-                        #deviation2 = abs(observedCentralDelta - theoretical.delta)
+		deviation = abs(observedDelta - theoretical.delta)   #what if we take the relative deviation instead of absolute
+                            #deviation2 = abs(observedCentralDelta - theoretical.delta)
 
-                        if deviation < 0.1:                                                 
-                            DeltaRankIndex.append({'tick':optionTick_t1.timestampStr,'ID': theoretical.Id.numDataPoints, 'deviation': deviation, 'empirical': observedDelta, 'theoretical': theoretical.delta, 'Gamma': observedGamma, 'stockLast': underlyingTick_t1.last, 'OptionLast': optionTick_t1.last, 'theoretical OptionPrice': theorical.price})
-                            writer.writerow([optionMeta.instrument,optionTick_t1.timestampStr, theoretical.Id.numDataPoints, deviation, observedDelta, theoretical.delta, observedGamma, underlyingTick_t0.last])                            
-                            continue
+                if deviation < 0.1:                                                 
+                    DeltaRankIndex.append({'Instrument': optionMeta.instrument, 'tick':optionTick_t1.timestampStr,'ID': theoretical.Id.numDataPoints, 'deviation': deviation, 'empirical': observedDelta, 'theoretical': theoretical.delta, 'Gamma': observedGamma, 'stockLast': underlyingTick_t1.last, 'OptionLast': optionTick_t1.last, 'theoretical OptionPrice': theoretical.price})
+                    writer.writerow([optionMeta.instrument,optionTick_t1.timestampStr, theoretical.Id.numDataPoints, deviation, observedDelta, theoretical.delta, observedGamma, underlyingTick_t0.last])                            
+                    continue
 
-			deviationList.append({'id': theoretical.Id.numDataPoints, 'deviation': deviation, 'deviation with central': deviation2, 'empirical': observedDelta, 'emp with central': observedCentralDelta, 'theoretical': theoretical.delta, 'stockLast': underlyingTick_t0.last})
+		deviationList.append({'id': theoretical.Id.numDataPoints, 'deviation': deviation, 'deviation with central': deviation2, 'empirical': observedDelta, 'emp with central': observedCentralDelta, 'theoretical': theoretical.delta, 'stockLast': underlyingTick_t0.last})
                         
 			#theoreticalPrice = theoretical.price
 		deviationList.sort(key = lambda x: x['deviation with central'])
@@ -202,18 +217,23 @@ def processPosition(optionMeta, pricedData, positionIndex):
 		print deviationList[:10]
                 
         
-def BuySellPositions(DeltaRankIndex)
-        BuySellIndex = []
-        BuyPositionIndex = None
-        SellPositionIndex = None
+def BuySellPositions(DeltaRankIndex):
+        BuyIndex = []
+        SellIndex = []
+        #BuyPositionIndex = None
+        #SellPositionIndex = None
 #
 #        for x in range(len(DeltaRankIndex))
 #            #if DeltaRankIndex.theoretical price > DeltaRankIndex.market price and 
 #            
-        for d in range(len(deviationList))
-            if 
-#def 
+        for d in range(len(DeltaRankIndex)):
+            if DeltaRankIndex.theoretical.price[d] > DeltaRankIndex.optionTick_t1.last[d]:
 
+                #code the part for the calulation of s(i+1) using a new function for which uses the same logic for differentials as the delta. 
+
+                BuyIndex.append({'Instrument': DeltaRankIndex.optionMeta.instrument, 'tick':DeltaRankIndex.optionTick_t1.timestampStr,'ID': DeltaRankIndex.theoretical.Id.numDataPoints, 'deviation': DeltaRankIndex.deviation, 'empirical': DeltaRankIndex.observedDelta, 'theoretical': DeltaRankIndex.theoretical.delta, 'Gamma': DeltaRankIndex.observedGamma, 'stockLast': DeltaRankIndex.underlyingTick_t1.last, 'OptionLast': DeltaRankIndex.optionTick_t1.last, 'theoretical OptionPrice': DeltaRankIndex.theoretical.price})
+            else: 
+                SellIndex.append({'Instrument': DeltaRankIndex.optionMeta.instrument, 'tick':DeltaRankIndex.optionTick_t1.timestampStr,'ID': DeltaRankIndex.theoretical.Id.numDataPoints, 'deviation': DeltaRankIndex.deviation, 'empirical': DeltaRankIndex.observedDelta, 'theoretical': DeltaRankIndex.theoretical.delta, 'Gamma': DeltaRankIndex.observedGamma, 'stockLast': DeltaRankIndex.underlyingTick_t1.last, 'OptionLast': DeltaRankIndex.optionTick_t1.last, 'theoretical OptionPrice': DeltaRankIndex.theoretical.price})
 
 def processInstrument(optionMeta, pricedData):
 	print 'Processing -', optionMeta
@@ -243,13 +263,13 @@ def main():
 #    	return
     
     print 'check'
-    for root, dirnames, filenames in os.walk("C://Trading//data//analysis_20140628//FDX.priced//FDX//FDX//20140624"):
+    for root, dirnames, filenames in os.walk("C://Trading//data//analysis_20140628//FDX.priced//FDX//FDX//"):
     	for filename in fnmatch.filter(filenames, 'option_tick_priced.proto'):
     		pricedDataFile = root + "//" + filename
     		print 'Processing file -', pricedDataFile 
     		for (optionMeta, pricedData) in getInstrumentIterator(pricedDataFile):
     			processInstrument(optionMeta, pricedData)
-
+                        break #just added.. 
  
 
 
