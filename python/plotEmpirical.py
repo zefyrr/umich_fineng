@@ -166,6 +166,7 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 
 	fig.autofmt_xdate(bottom=0.2, rotation=35, ha='right')
 	plt.show()
+	#mpld3.display(fig)
 
 
 
