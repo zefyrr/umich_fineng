@@ -25,6 +25,8 @@ def main():
 		print 'Invalid path %s' % args.datadir
 		return
 
+	fh = open('data.tsv', 'w')
+
 	processedDataMap = {}
 	for root, dirnames, filenames in os.walk(args.datadir):
 		for filename in fnmatch.filter(filenames, 'option_tick_priced.proto'):
@@ -36,10 +38,15 @@ def main():
 					underlyingTick = pricedRecord.pairedTick.underlyingTick
 					optionTick = pricedRecord.pairedTick.optionTick
 
-					print optionTick.timestampStr, optionTick.last, underlyingTick.last
+					fields = optionTick.timestampStr, optionTick.last, underlyingTick.last
+					fields = map(lambda x: str(x), fields)
+
+					print '\t'.join(fields)
+					fh.write('\t'.join(fields))
+					fh.write('\n')
 
 
-
+	fh.close
 
 if __name__ == "__main__":
     main()
