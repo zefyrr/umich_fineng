@@ -1,0 +1,11 @@
+some instances within the same instrument where the current time is less than previous time.
+
+Some instances have the same time for both the current and previous time
+
+from analysis:
+	starting at 9:45 am, first set of continious ticks happen for 3 times before it breaks at 11:45am.
+	the previous tick before the 11:45 happens at 11:28am.
+
+
+the option last diff is -0.05, while the underlying last diff is 0.05, and resulting empirical delta is at -0.999
+the theoretical delta on the other hand lie in the range of 0.36 to 0.39
