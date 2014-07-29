@@ -11,6 +11,7 @@ import itertools
 import numpy as np
 from profitAndLoss import *
 from positions import createPositions
+from BSManalysis import *
 
 
 def processInstrument(optionMeta, pricedData):
@@ -32,8 +33,11 @@ def processInstrument(optionMeta, pricedData):
 	for positionIndex in positions:
 		#Naked profit
 		profitRecord = NakedProfitPerPosition(optionMeta, pricedData, positionIndex)
-		#HEdged Profit
+		#writer1 = csv.writer(open("./nakedProfit.csv",'wb'))
+		#writer.writerow()
+		##HEdged Profit
 		profitRecord = HedgedProfitPerPosition(optionMeta, pricedData, positionIndex)
+		#writer2 = csv.writer(open("./nakedProfit.csv",'wb'))
 		print profitRecord
 		break
 		return profitRecord
@@ -67,13 +71,14 @@ def main():
 			pricedDataFile = root + "/" + filename
 			print 'Processing file -', pricedDataFile 
 
-			for (optionMeta, pricedData) in getInstrumentIterator(pricedDataFile):
+			for (optionMeta, pricedData) in getInstrumentIterator(pricedDataFile,('FDX1421F145')):
 				instrumentMeta = getInstrumentMetaStr(optionMeta)
 				print 'Processing instrument - ', instrumentMeta
-				processedData = processInstrument(optionMeta, pricedData)
+				#processedData = processInstrument(optionMeta, pricedData)
 				#profit = computeNakedProfit(pricedData, (1, len(pricedData)-1))
 				#print 'profit', profit
-				
+				BSMdata = computeBSMValues(optionMeta,pricedData)
+				print "BSM", BSMdata
 
 	        if raw_input("Press 'q' and then enter to quit, or enter to continue\n").lower() == 'q':
 			return
