@@ -179,7 +179,7 @@ def HedgedProfitPerPosition(optionMeta, pricedData, positionIndex):
 	deviationList.sort(key = lambda x: x['deviation'])
 	bestList = deviationList[:10]+deviationList[-10:]
 	profitRecord['Profit']={}
-	for i in range(len(bestList)):
+	for i in range(len(deviationList)):
 	        delta = deviationList[i].get('theoreticalDelta')
 	        if deviationList[i].get('theoreticalPrice') > marketPrice:
                     profitRecord['Profit'][bestList[i].get('id')] = (bid_tn - ask_t1) - delta*(underlyingAsk_tn - underlyingBid_t1)
