@@ -151,12 +151,12 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 	plotStockPrices = plotPrices
 	plotStockPrices.plot(timestamps, stockPrices, linestyle='-', marker='d', color='r', label='stock')
 	plotStockPrices.set_ylabel('stock')
-	plotStockPrices.legend(loc='upper right', fancybox=True)
+	plotStockPrices.legend(loc='upper left', fancybox=True)
 
 	plotOptionPrices = plotPrices.twinx()
 	line, = plotOptionPrices.plot(timestamps, optionPrices, linestyle='-', marker='o', color='b', label='option', picker=5)
 	plotOptionPrices.set_ylabel('option')
-	plotOptionPrices.legend(loc='upper left', fancybox=True)
+	plotOptionPrices.legend(loc='upper right', fancybox=True)
 
 
 

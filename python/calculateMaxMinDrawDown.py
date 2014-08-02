@@ -27,6 +27,7 @@ def processInstrument(optionMeta, pricedData):
 	for position in positions:
 		minMax = computeMinMax(optionMeta, pricedData, position)
 		pp.pprint(minMax) 
+		print minMax['theoretical']
 
 
 
