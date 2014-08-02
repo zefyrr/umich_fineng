@@ -23,8 +23,15 @@ class DataBrowser:
 
 		self.line = line
 		self.fig = fig
+		self.startIndex = None
+
+
+	def drawPosition(self, start, end):
+		print start, end
+
 
 	def onPick(self, event):
+
 		if event.artist != self.line: 
 			return True
 
@@ -33,8 +40,16 @@ class DataBrowser:
 		if not index: 
 			return True
 
-
 		tickIndex = event.ind[0]
+
+		if not self.startIndex:
+			self.startIndex = tickIndex
+		else:
+			if tickIndex > self.startIndex:
+				self.drawPosition(self.startIndex, tickIndex)
+			self.startIndex = None
+
+
 		theoreticalsForTick = self.theoreticals[tickIndex]
 		optionTick = self.optionTicks[tickIndex]
 		stockTick = self.stockTicks[tickIndex]
@@ -44,7 +59,6 @@ class DataBrowser:
 		stockTickStr = 'stock - %s' % ' '.join(str(stockTick).split('\n'))
 
 		textstr = optionTickStr + '\n' + stockTickStr
-
 
 		prices = map(lambda x: x.price, theoreticalsForTick)
 		deltas = map(lambda x: x.delta, theoreticalsForTick)
@@ -63,19 +77,9 @@ class DataBrowser:
 		self.plotPrices.set_ylabel('price')
 		self.plotPrices.legend(loc='upper right', fancybox=True)
 
+
+
 		self.fig.canvas.draw()
-
-
-def processInstrument(optionMeta, pricedData):
-	instrumentMeta = getInstrumentMetaStr(optionMeta)
-	print 'Processing -', instrumentMeta, 'ticks -', len(pricedData)
-	firstPricedRecord = pricedData[0]
-
-	if len(pricedData) <= 8:
-		'Not enough ticks'
-		return 
-
-	return computeEmpiricals(pricedData, (0, len(pricedData) - 1))
 
 
 def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
@@ -83,16 +87,17 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 	fig = plt.figure()
 	fig.suptitle(instrumentMeta,  fontsize=18, fontweight='bold')
 
-	plotPrices = fig.add_subplot(311)
+	plotPrices = fig.add_subplot(411)
 	plotPrices.set_title('Prices')
 	plotPrices.grid(True)
 
 
-	plotDelta = fig.add_subplot(312, sharex=plotPrices)
+	plotDelta = fig.add_subplot(412, sharex=plotPrices)
 	plotDelta.set_title('Empirical Deltas')
 	plotDelta.grid(True)
 
-	plotTheoreticals = fig.add_subplot(313)
+	plotTheoreticals = fig.add_subplot(413)
+	plotPositionValue = fig.add_subplot(414)
 
 
 	timestamps = []
@@ -166,9 +171,17 @@ def plotInstrumentEmpiricals(instrumentMeta, processedDataList):
 
 	fig.autofmt_xdate(bottom=0.2, rotation=35, ha='right')
 	plt.show()
-	#mpld3.display(fig)
 
+def processInstrument(optionMeta, pricedData):
+	instrumentMeta = getInstrumentMetaStr(optionMeta)
+	print 'Processing -', instrumentMeta, 'ticks -', len(pricedData)
+	firstPricedRecord = pricedData[0]
 
+	if len(pricedData) <= 8:
+		'Not enough ticks'
+		return 
+
+	return computeEmpiricals(pricedData, (0, len(pricedData) - 1))
 
 
 def main():

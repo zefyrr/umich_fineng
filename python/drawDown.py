@@ -1,7 +1,7 @@
 import numpy as np
 import math
 
-def computeMinMax(optionMeta, pricedData, positionIndex):
+def computeMinMax(pricedData, positionIndex):
 
 	(startPosition, endPosition)  = positionIndex
 
@@ -28,14 +28,19 @@ def computeMinMax(optionMeta, pricedData, positionIndex):
 			prices.append(positionValue)
 
 		drawDowns = computeDrawDowns(prices)
+		if len(drawDowns) == 0:
+			continue
 		maxDrawDown = max(drawDowns, key=lambda x: x['drawdown'])
 		maxDrawDown['theoretical'] = theoreticalRecord
+		maxDrawDown['direction'] = direction
 		maxDrawDowns.append(maxDrawDown)
 
+	if len(maxDrawDowns) == 0:
+		return
 
 	minMaxdrawDown = min(maxDrawDowns, key=lambda x: x['drawdown'])
-	minMaxdrawDown['start'] = pricedData[maxDrawDown['start'] + startPosition].pairedTick.underlyingTick.timestampStr
-	minMaxdrawDown['end'] = pricedData[maxDrawDown['end'] + startPosition].pairedTick.underlyingTick.timestampStr
+	minMaxdrawDown['start'] = maxDrawDown['start'] + startPosition
+	minMaxdrawDown['end'] = maxDrawDown['end'] + startPosition
 	return minMaxdrawDown
 
 
