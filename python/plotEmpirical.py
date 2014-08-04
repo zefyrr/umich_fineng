@@ -117,13 +117,13 @@ class Plot:
 		plotTheoreticalDelta.cla()
 		plotTheoreticalDelta.set_title('Theoreticals @ ' + self.timestampStrs[tickIndex])
 		plotTheoreticalDelta.grid(True)
-		lnDelta = plotTheoreticalDelta.plot(ids, deltas, color='k', label='delta')
+		lnDelta, = plotTheoreticalDelta.plot(ids, deltas, color='k', label='delta')
 		plotTheoreticalDelta.set_ylabel('delta')
 
 		plotTheoreticalPrices = self.plotTheoreticalPrices
 		plotTheoreticalPrices.cla()
 		plotTheoreticalPrices.grid(True)
-		lnPrice = plotTheoreticalPrices.plot(ids, prices, color='b', label='price')
+		lnPrice, = plotTheoreticalPrices.plot(ids, prices, color='b', label='price')
 		plotTheoreticalPrices.set_ylabel('price')
 
 		lns = [lnDelta, lnPrice]
