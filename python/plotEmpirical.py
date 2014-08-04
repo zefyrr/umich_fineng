@@ -29,7 +29,6 @@ class Plot:
 		plotPrices.set_title('Prices')
 		plotPrices.grid(True)
 
-
 		plotDelta = fig.add_subplot(412, sharex=plotPrices)
 		plotDelta.set_title('Empirical Deltas')
 		plotDelta.grid(True)
@@ -44,10 +43,15 @@ class Plot:
 		self.spreadDeltas = pandas.Series(map(lambda x: x['delta']['spread'], empiricalData))
 		self.timestamps = pandas.tseries.tools.to_datetime(map(lambda x: x['timestamp'], empiricalData), unit='ms')
 		self.theoreticals = map(lambda x: x['theoreticals'], empiricalData)
+		self.timestampStrs = map(lambda x: x['timestampStr'], empiricalData)
 
 
 		self.startIndex = None
-		self.plotPrices = plotPrices
+		self.startPositionAnnotation = None
+		self.endPositionAnnotation = None
+
+		self.plotStockPrices = plotPrices
+		self.plotOptionPrices = plotPrices.twinx()
 		self.plotDelta = plotDelta
 		self.plotTheoreticalDelta = plotTheoreticals
 		self.plotTheoreticalPrices = plotTheoreticals.twinx()
@@ -59,27 +63,29 @@ class Plot:
 		fig.canvas.mpl_connect('pick_event', self.onPick)
 
 		fig.autofmt_xdate(bottom=0.2, rotation=35, ha='right')
+		fig.subplots_adjust(hspace=0.7)
 		plt.show()
 
 
-
 	def drawPrices(self):
-		plotPrices = self.plotPrices
 		timestamps = self.timestamps
 		stockPrices = self.stockPrices
 		optionPrices = self.optionPrices
 
-		plotStockPrices = plotPrices
-		plotStockPrices.plot(timestamps, stockPrices, linestyle='-', marker='d', color='r', label='stock')
+		plotStockPrices = self.plotStockPrices
+		lnStock, = plotStockPrices.plot(timestamps, stockPrices, linestyle='-', marker='d', color='r', label='stock')
 		plotStockPrices.set_ylabel('stock')
-		plotStockPrices.legend(loc='upper left', fancybox=True)
 
-		plotOptionPrices = plotPrices.twinx()
-		line, = plotOptionPrices.plot(timestamps, optionPrices, linestyle='-', marker='o', color='b', label='option', picker=5)
+		plotOptionPrices = self.plotOptionPrices
+		lnOption, = plotOptionPrices.plot(timestamps, optionPrices, linestyle='-', marker='o', color='b', label='option', picker=5)
 		plotOptionPrices.set_ylabel('option')
-		plotOptionPrices.legend(loc='upper right', fancybox=True)
+		plotOptionPrices.set_xlim(timestamps[0], timestamps[-1])
 
-		return line
+		lns = [lnStock, lnOption]
+		labs = [l.get_label() for l in lns]
+		plotOptionPrices.legend(lns, labs, fancybox=True, bbox_to_anchor=(1.03, 1), loc=2, borderaxespad=0.0)
+
+		return lnOption
 
 	def drawDelta(self):
 		plotDelta = self.plotDelta
@@ -89,15 +95,17 @@ class Plot:
 
 
 		plotDeltaSpread = plotDelta
-		plotDeltaSpread.scatter(timestamps, spreadDeltas, marker='s', color='k', label='spread')
+		scatterSpread = plotDeltaSpread.scatter(timestamps, spreadDeltas, marker='s', color='k', label='spread')
 		plotDeltaSpread.set_ylabel('spread')
-		plotDeltaSpread.legend(loc='upper left', fancybox=True)
 
 
 		plotDeltaLast = plotDelta.twinx()
-		plotDeltaLast.scatter(timestamps, lastDeltas, marker='x', color='g', label='last')
+		scatterLast = plotDeltaLast.scatter(timestamps, lastDeltas, marker='x', color='g', label='last')
 		plotDeltaLast.set_ylabel('last')
-		plotDeltaLast.legend(loc='upper right', fancybox=True)
+
+		lns = [scatterSpread, scatterLast]
+		labs = [l.get_label() for l in lns]
+		plotDeltaLast.legend(lns, labs, fancybox=True, bbox_to_anchor=(1.03, 1), loc=2, borderaxespad=0.0)
 
 	def drawTheoreticals(self, tickIndex):
 		theoreticalsForTick = self.theoreticals[tickIndex]
@@ -106,21 +114,21 @@ class Plot:
 		ids = map(lambda x: x.Id.numDataPoints, theoreticalsForTick)
 
 		plotTheoreticalDelta = self.plotTheoreticalDelta
-
 		plotTheoreticalDelta.cla()
-		plotTheoreticalDelta.set_title('Theoreticals')
+		plotTheoreticalDelta.set_title('Theoreticals @ ' + self.timestampStrs[tickIndex])
 		plotTheoreticalDelta.grid(True)
-		plotTheoreticalDelta.plot(ids, deltas, color='k', label='delta')
+		lnDelta = plotTheoreticalDelta.plot(ids, deltas, color='k', label='delta')
 		plotTheoreticalDelta.set_ylabel('delta')
-		plotTheoreticalDelta.legend(loc='upper left', fancybox=True)
 
 		plotTheoreticalPrices = self.plotTheoreticalPrices
-
 		plotTheoreticalPrices.cla()
 		plotTheoreticalPrices.grid(True)
-		plotTheoreticalPrices.plot(ids, prices, color='b', label='price')
+		lnPrice = plotTheoreticalPrices.plot(ids, prices, color='b', label='price')
 		plotTheoreticalPrices.set_ylabel('price')
-		plotTheoreticalPrices.legend(loc='upper right', fancybox=True)
+
+		lns = [lnDelta, lnPrice]
+		labs = [l.get_label() for l in lns]
+		plotTheoreticalPrices.legend(lns, labs, fancybox=True, bbox_to_anchor=(1.03, 1), loc=2, borderaxespad=0.0)
 
 
 	def drawAsset(self, startIndex, endIndex):
@@ -146,20 +154,49 @@ class Plot:
 			positionValue = direction * (optionPrice - (underlyingPrice * delta))
 			prices.append(positionValue)
 
+		profit = prices[-1] - prices[0]
 		prices = pandas.Series(prices)
 		timestamps = self.timestamps[startIndex:endIndex]
 
-		title = "Asset numDataPoints: %d delta :%f price: %f direction: %s" % (numDataPoints, delta, price, positionType)
+		title = "Asset\nid: %d delta :%f price: %f direction: %s" % (numDataPoints, delta, price, positionType)
 
 		plotAsset = self.plotAsset
 
 		plotAsset.cla()
 		plotAsset.set_title(title)
 		plotAsset.grid(True)
-		plotAsset.plot(timestamps, prices, linestyle='-', marker='d', color='b', label='asset')
-		plotAsset.set_ylabel('asset')
+		lnModel, = plotAsset.plot(timestamps, prices, linestyle='-', marker='d', color='b', label='asset p/l : %0.2f' % profit)
+		plotAsset.set_ylabel('price')
 		plotAsset.legend(loc='upper right', fancybox=True)
-		
+		plotAsset.set_xlim(timestamps[0] - pandas.DateOffset(minutes=5), timestamps[-1] + pandas.DateOffset(minutes=5))
+
+		lns = [lnModel]
+		labs = [l.get_label() for l in lns]
+		plotAsset.legend(lns, labs, fancybox=True, bbox_to_anchor=(1.03, 1), loc=2, borderaxespad=0.0)
+
+	def drawAnnotation(self, x, y, tickIndex, plot, offets=(-30, 30)):
+		text = "option: %0.2f\nstock: %0.2f\ntimestamp: %s"
+		text = text % (self.optionPrices[tickIndex], self.stockPrices[tickIndex], self.timestampStrs[tickIndex])
+
+		annotation = plot.annotate(text, xy=(x, y), ha='left',
+		xytext=offets, textcoords='offset points', va='bottom',
+		bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.85),
+		arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0')
+		)
+		annotation.set_visible(True)
+		return annotation
+
+	def drawStartPositionAnnotation(self, x, y, tickIndex):
+		self.startPositionAnnotation = self.drawAnnotation(x, y, tickIndex, self.plotOptionPrices)
+
+	def drawEndPositionAnnotation(self, x, y, tickIndex):
+		self.endPositionAnnotation = self.drawAnnotation(x, y, tickIndex, self.plotOptionPrices)
+
+	def clearPositionAnnotation(self):
+		if self.startPositionAnnotation:
+			self.startPositionAnnotation.remove()
+		if self.endPositionAnnotation:
+			self.endPositionAnnotation.remove()
 
 
 	def onPick(self, event):
@@ -173,13 +210,17 @@ class Plot:
 
 		tickIndex = event.ind[0]
 
-		self.drawTheoreticals(tickIndex)
 
+		x, y = event.mouseevent.xdata, event.mouseevent.ydata
 
 		if not self.startIndex:
 			self.startIndex = tickIndex
+			self.clearPositionAnnotation()
+			self.drawStartPositionAnnotation(x, y, tickIndex)
+			self.drawTheoreticals(tickIndex)
 		else:
 			if tickIndex > self.startIndex:
+				self.drawEndPositionAnnotation(x, y, tickIndex)
 				self.drawAsset(self.startIndex, tickIndex)
 			self.startIndex = None
 

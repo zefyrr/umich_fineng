@@ -17,6 +17,7 @@ def computeEmpiricals(pricedData, positionIndex):
 		
 		empiricalRecord = {}
 		empiricalRecord['timestamp'] = optionTick_t1.timestamp
+		empiricalRecord['timestampStr'] = optionTick_t1.timestampStr
 		empiricalRecord['optionTick'] = optionTick_t1
 		empiricalRecord['underlyingTick'] = underlyingTick_t1
 		empiricalRecord['underlyingTick'] = underlyingTick_t1
