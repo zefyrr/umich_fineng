@@ -1,6 +1,9 @@
 import numpy as np
 import math
 
+
+
+
 def computeMinMax(pricedData, positionIndex):
 
 	(startPosition, endPosition)  = positionIndex
@@ -52,7 +55,7 @@ def computeDrawDowns(prices):
 	drawdowns = []
 	for i in range(1, len(prices)):
 		currentPrice = prices[i]
-		drawdown = runningMax - currentPrice
+		drawdown = (runningMax - currentPrice)/float(runningMax)
 		if drawdown > 0:
 			drawdowns.append({'drawdown': drawdown, 'start': maxIndex, 'end': i})
 		if runningMax <  currentPrice:
