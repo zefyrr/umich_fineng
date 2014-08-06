@@ -25,28 +25,20 @@ def main():
 		print 'Invalid path %s' % args.datadir
 		return
 
-	fh = open('data.tsv', 'w')
 
-	processedDataMap = {}
 	for root, dirnames, filenames in os.walk(args.datadir):
 		for filename in fnmatch.filter(filenames, 'option_tick_priced.proto'):
 			pricedDataFile = root + "/" + filename
-			print 'Processing file -', pricedDataFile 
 
-			for (optionMeta, pricedData) in getInstrumentIterator(pricedDataFile, ('FDX1421F145')):
+			instrumentMetaMap = {}
+			for (optionMeta, pricedData) in getInstrumentIterator(pricedDataFile):
 				for pricedRecord in pricedData:
-					underlyingTick = pricedRecord.pairedTick.underlyingTick
-					optionTick = pricedRecord.pairedTick.optionTick
+					instrumentMeta = getInstrumentMetaStr(pricedRecord.pairedTick.optionMeta)
+					instrumentMetaMap[instrumentMeta] = instrumentMetaMap.get(instrumentMeta, 0) + 1
 
-					fields = optionTick.timestampStr, optionTick.last, underlyingTick.last
-					fields = map(lambda x: str(x), fields)
+			for key, value in  instrumentMetaMap.items():
+				print "%s - %d" % (key, value)
 
-					print '\t'.join(fields)
-					fh.write('\t'.join(fields))
-					fh.write('\n')
-
-
-	fh.close
 
 if __name__ == "__main__":
     main()

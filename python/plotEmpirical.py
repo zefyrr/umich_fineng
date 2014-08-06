@@ -243,12 +243,17 @@ def processInstrument(optionMeta, pricedData):
 def main():
 	parser = argparse.ArgumentParser(description="Run analysis")
 	parser.add_argument('-d', '--datadir', help='location of priced data')
+	parser.add_argument('-o', '--option', help='option to run analysis on')
 
 	args = parser.parse_args()
 
 	if not args.datadir:
 		parser.print_help()
 		return
+
+	if not args.option:
+		parser.print_help()
+		return		
 
 	if not os.path.exists(args.datadir):
 		print 'Invalid path %s' % args.datadir
@@ -259,7 +264,7 @@ def main():
 			pricedDataFile = root + "/" + filename
 			print 'Processing file -', pricedDataFile 
 
-			for (optionMeta, pricedData) in getInstrumentIterator(pricedDataFile, ('FDX1421F145')):
+			for (optionMeta, pricedData) in getInstrumentIterator(pricedDataFile, (args.option)):
 				empiricalData = processInstrument(optionMeta, pricedData)
 				if empiricalData:
 					plot = Plot(optionMeta, pricedData, empiricalData)
