@@ -80,7 +80,6 @@ class Plot:
 		lnOption, = plotOptionPrices.plot(timestamps, optionPrices, linestyle='-', marker='o', color='b', label='option', picker=5)
 		plotOptionPrices.set_ylabel('option')
 		plotOptionPrices.set_xlim(timestamps[0], timestamps[-1])
-		plotOptionPrices.set_ylim(optionPrices[0], optionPrices[-1])
 
 
 		lns = [lnStock, lnOption]
