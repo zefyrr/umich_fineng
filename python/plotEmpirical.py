@@ -80,6 +80,8 @@ class Plot:
 		lnOption, = plotOptionPrices.plot(timestamps, optionPrices, linestyle='-', marker='o', color='b', label='option', picker=5)
 		plotOptionPrices.set_ylabel('option')
 		plotOptionPrices.set_xlim(timestamps[0], timestamps[-1])
+		plotOptionPrices.set_ylim(plotOptionPrices[0] - 2, plotOptionPrices[-1] + 2)
+
 
 		lns = [lnStock, lnOption]
 		labs = [l.get_label() for l in lns]
@@ -193,10 +195,13 @@ class Plot:
 		self.endPositionAnnotation = self.drawAnnotation(x, y, tickIndex, self.plotOptionPrices)
 
 	def clearPositionAnnotation(self):
-		if self.startPositionAnnotation:
-			self.startPositionAnnotation.remove()
-		if self.endPositionAnnotation:
-			self.endPositionAnnotation.remove()
+		try:
+			if self.startPositionAnnotation:
+				self.startPositionAnnotation.remove()
+			if self.endPositionAnnotation:
+				self.endPositionAnnotation.remove()
+		except:
+			pass
 
 
 	def onPick(self, event):
