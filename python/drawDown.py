@@ -4,7 +4,7 @@ import math
 
 
 
-def computeMinMax(pricedData, positionIndex):
+def computeMinMax(pricedData, positionIndex, topK = 5):
 
 	(startPosition, endPosition)  = positionIndex
 
@@ -33,6 +33,7 @@ def computeMinMax(pricedData, positionIndex):
 		drawDowns = computeDrawDowns(prices)
 		if len(drawDowns) == 0:
 			continue
+
 		maxDrawDown = max(drawDowns, key=lambda x: x['drawdown'])
 		maxDrawDown['theoretical'] = theoreticalRecord
 		maxDrawDown['direction'] = direction
@@ -41,10 +42,12 @@ def computeMinMax(pricedData, positionIndex):
 	if len(maxDrawDowns) == 0:
 		return
 
-	minMaxdrawDown = min(maxDrawDowns, key=lambda x: x['drawdown'])
-	minMaxdrawDown['start'] = maxDrawDown['start'] + startPosition
-	minMaxdrawDown['end'] = maxDrawDown['end'] + startPosition
-	return minMaxdrawDown
+	sortedMaxdrawDowns = sorted(maxDrawDowns, key=lambda x: x['drawdown'])
+	topK_DrawDowns = sortedMaxdrawDowns[:topK]
+	for minMaxdrawDown in topK_DrawDowns:
+		minMaxdrawDown['start'] = maxDrawDown['start'] + startPosition
+		minMaxdrawDown['end'] = maxDrawDown['end'] + startPosition
+	return topK_DrawDowns
 
 
 

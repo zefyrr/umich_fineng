@@ -23,7 +23,10 @@ class Plot:
 
 		fig = plt.figure()
 		instrumentMeta = getInstrumentMetaStr(optionMeta)
-		fig.suptitle(instrumentMeta,  fontsize=18, fontweight='bold')
+		tradingDay = map(lambda x: x['timestampStr'], empiricalData)[0]
+
+		supTitle = instrumentMeta + "\nTradingDay: " + tradingDay[0:10]
+		fig.suptitle(supTitle,  fontsize=18, fontweight='bold')
 
 		plotPrices = fig.add_subplot(411)
 		plotPrices.set_title('Prices')
@@ -133,52 +136,53 @@ class Plot:
 
 
 	def drawAsset(self, startIndex, endIndex):
-		minMax = computeMinMax(self.pricedData, (startIndex, endIndex))
-		if not minMax:
+		topKminMax = computeMinMax(self.pricedData, (startIndex, endIndex))
+		if not topKminMax or len(topKminMax) == 0:
 			return
 
-		theoretical = minMax['theoretical']
-		direction = minMax['direction']
-
-		positionType = "Buy" if direction == 1 else "Sell"
-		numDataPoints = theoretical.Id.numDataPoints
-		delta = theoretical.delta
-		price = theoretical.price
-
-
-		prices = []
-		for i in range(startIndex, endIndex+1):		
-			pricedRecord = self.pricedData[i + 1]
-
-			optionPrice = pricedRecord.pairedTick.optionTick.last
-			underlyingPrice = pricedRecord.pairedTick.underlyingTick.last
-			positionValue = (direction * (optionPrice - (underlyingPrice * delta))) * 100
-			print i, optionPrice, underlyingPrice, positionValue
-
-			prices.append(positionValue)
-
-		profit = prices[-1] - prices[0]
-		prices = pandas.Series(prices)
 		timestamps = self.timestamps[startIndex:endIndex+1]
+		assets = []
+		title = "\nAssets:"
+		for minMax in topKminMax:
+			theoretical = minMax['theoretical']
+			direction = minMax['direction']
 
-		title = "Asset\nid: %d delta :%f price: %f direction: %s" % (numDataPoints, delta, price, positionType)
+			positionType = "Buy" if direction == 1 else "Sell"
+			numDataPoints = theoretical.Id.numDataPoints
+			delta = theoretical.delta
+			price = theoretical.price
+
+
+			prices = []
+			for i in range(startIndex, endIndex+1):		
+				pricedRecord = self.pricedData[i + 1]
+
+				optionPrice = pricedRecord.pairedTick.optionTick.last
+				underlyingPrice = pricedRecord.pairedTick.underlyingTick.last
+				positionValue = (direction * (optionPrice - (underlyingPrice * delta))) * 100
+
+				prices.append(positionValue)
+
+			profit = prices[-1] - prices[0]
+			prices = pandas.Series(prices)
+			title = title + "\nid: %d delta :%f price: %f direction: %s asset p/l : %0.5f" % (numDataPoints, delta, price, positionType, profit)
+
+			assets.append(prices)
 
 		plotAsset = self.plotAsset
-
 		plotAsset.cla()
 		plotAsset.set_title(title)
 		plotAsset.grid(True)
-		lnModel, = plotAsset.plot(timestamps, prices, linestyle='-', marker='d', color='b', label='asset p/l : %0.2f' % profit)
-		plotAsset.set_ylabel('price')
-		plotAsset.legend(loc='upper right', fancybox=True)
+		models = []
+
+		for i, prices in enumerate(assets):
+			lnModel, = plotAsset.plot(timestamps, prices, linestyle='-', marker='d', color='b')
+			models.append(lnModel)
+
 		plotAsset.set_xlim(timestamps[0] - pandas.DateOffset(minutes=5), timestamps[-1] + pandas.DateOffset(minutes=5))
 
-		lns = [lnModel]
-		labs = [l.get_label() for l in lns]
-		plotAsset.legend(lns, labs, fancybox=True, bbox_to_anchor=(1.03, 1), loc=2, borderaxespad=0.0)
 
 	def drawAnnotation(self, x, y, tickIndex, plot, offets=(-30, 30)):
-		print  x, y, tickIndex
 		text = "option: %0.2f\nstock: %0.2f\ntimestamp: %s"
 		text = text % (self.optionPrices[tickIndex], self.stockPrices[tickIndex], self.timestampStrs[tickIndex])
 
