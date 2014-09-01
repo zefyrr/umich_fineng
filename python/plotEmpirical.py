@@ -145,19 +145,21 @@ class Plot:
 		delta = theoretical.delta
 		price = theoretical.price
 
+
 		prices = []
-		for i in range(startIndex, endIndex):		
-			pricedRecord = self.pricedData[i]
+		for i in range(startIndex, endIndex+1):		
+			pricedRecord = self.pricedData[i + 1]
 
 			optionPrice = pricedRecord.pairedTick.optionTick.last
 			underlyingPrice = pricedRecord.pairedTick.underlyingTick.last
+			positionValue = (direction * (optionPrice - (underlyingPrice * delta))) * 100
+			print i, optionPrice, underlyingPrice, positionValue
 
-			positionValue = direction * (optionPrice - (underlyingPrice * delta))
 			prices.append(positionValue)
 
 		profit = prices[-1] - prices[0]
 		prices = pandas.Series(prices)
-		timestamps = self.timestamps[startIndex:endIndex]
+		timestamps = self.timestamps[startIndex:endIndex+1]
 
 		title = "Asset\nid: %d delta :%f price: %f direction: %s" % (numDataPoints, delta, price, positionType)
 
@@ -176,6 +178,7 @@ class Plot:
 		plotAsset.legend(lns, labs, fancybox=True, bbox_to_anchor=(1.03, 1), loc=2, borderaxespad=0.0)
 
 	def drawAnnotation(self, x, y, tickIndex, plot, offets=(-30, 30)):
+		print  x, y, tickIndex
 		text = "option: %0.2f\nstock: %0.2f\ntimestamp: %s"
 		text = text % (self.optionPrices[tickIndex], self.stockPrices[tickIndex], self.timestampStrs[tickIndex])
 
@@ -213,7 +216,6 @@ class Plot:
 			return True
 
 		tickIndex = event.ind[0]
-
 
 		x, y = event.mouseevent.xdata, event.mouseevent.ydata
 
