@@ -53,15 +53,30 @@ def computeMinMax(pricedData, positionIndex, topK = 5):
 
 
 def computeDrawDowns(prices):
-	runningMax = prices[0]
+	startPrice = prices[0]
+	runningMax = startPrice
 	maxIndex = 0
 	drawdowns = []
 	for i in range(1, len(prices)):
 		currentPrice = prices[i]
 		drawdown = (runningMax - currentPrice)/float(runningMax)
 		if drawdown > 0:
-			drawdowns.append({'drawdown': drawdown, 'start': maxIndex, 'end': i})
-		if runningMax <  currentPrice:
+			drawDown_relative = drawdown/startPrice
+			drawDown_regime = None
+			if currentPrice < startPrice:
+				drawDown_regime = 'loss'
+			else:
+				drawDown_regime = 'profit'
+
+			drawDownDict = {}
+			drawDownDict['drawdown'] = drawdown
+			drawDownDict['start'] = maxIndex
+			drawDownDict['end'] = i
+			drawDownDict['drawDown_relative'] = drawDown_relative
+			drawDownDict['drawDown_regime'] = drawDown_regime
+			drawdowns.append(drawDownDict)
+			
+		if runningMax < currentPrice:
 			runningMax = currentPrice
 			maxIndex = i
 	return drawdowns

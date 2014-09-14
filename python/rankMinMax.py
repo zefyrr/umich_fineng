@@ -37,6 +37,7 @@ def createPositions(pricedData):
 		i = i + 1
 
 	if startPositionIndex and endPositionIndex:
+		if (endPositionIndex - startPositionIndex) > 3:
 			positionsIndex.append((startPositionIndex, endPositionIndex))
 
 	return positionsIndex
@@ -74,13 +75,20 @@ def computeProfitLoss(pricedData, minMax, position):
 		prices.append(positionValue)
 
 	profit = prices[-1] - prices[0]
-	return theoretical.Id.numDataPoints, profit, minMax['drawdown']
+
+	retVal = []
+	retVal.extend([theoretical.Id.numDataPoints, profit, minMax['drawdown']])
+	retVal.extend([minMax['drawDown_relative'], minMax['drawDown_regime']])
+
+	return retVal
 
 
 
 def main():
 	parser = argparse.ArgumentParser(description="Run analysis")
 	parser.add_argument('-d', '--datadir', help='location of priced data')
+	parser.add_argument('-k', '--topK', help='specify Top K (default: 5)')
+
 
 	args = parser.parse_args()
 
@@ -99,10 +107,23 @@ def main():
 	header.extend(['instrument', 'strike', 'expirationDate'])
 	header.extend(['daysToExpire', 's/x'])
 	header.extend(['rank'])
-	header.extend(['numDataPoints', 'p/l', 'drawDown'])
+	header.extend(['numDataPoints', 'p/l', 'drawDown_absolute'])
+	header.extend(['drawDown_relative', 'drawDown_regime'])
+
 
 	statsFh.write('\t'.join(header))
 	statsFh.write('\n')
+
+
+	k = args.topK
+	if k:
+		try:
+			k = int(k)
+		except:
+			pass
+
+	if not k:
+		k = 5
 
 	for root, dirnames, filenames in os.walk(args.datadir):
 		for filename in fnmatch.filter(filenames, 'option_tick_priced.proto'):
@@ -111,18 +132,24 @@ def main():
 
 
 			for (optionMeta, pricedData) in getInstrumentIterator(pricedDataFile):
-				if len(pricedData) <= 8:
+				if len(pricedData) <= 6:
+					print '-------'
 					print 'Not enough ticks\n', optionMeta
+					print 'Num ticks -', len(pricedData)
+					print '\n'
 					continue
 				else:
+					print '-------'
 					print 'Processing\n', optionMeta
+					print 'Num ticks -', len(pricedData)
+					print '\n'
 
 
 				for position in createPositions(pricedData):
 					startPosition, endPosition = position
 					stats = computeStats(pricedData[startPosition])
 
-					topKMinMax = computeMinMax(pricedData, position)
+					topKMinMax = computeMinMax(pricedData, position, k)
 					if not topKMinMax:
 						continue
 					i = 0
