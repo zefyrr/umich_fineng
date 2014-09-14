@@ -49,7 +49,8 @@ def computeStats(startPricedRecord):
 	expirationDate = getDateGMTFromUTCEpoch(pairedTick.optionMeta.expirationDate)
 	last = pairedTick.underlyingTick.last
 	instrument = pairedTick.optionMeta.instrument
-	return (instrument, strike, expirationDate, daysToExpire, last/strike)
+	tradingDay = pairedTick.underlyingTick.timestampStr[0:10]
+	return (tradingDay, instrument, strike, expirationDate, daysToExpire, last/strike)
 
 def computeProfitLoss(pricedData, minMax, position):
 	startIndex, endIndex = position
@@ -73,7 +74,7 @@ def computeProfitLoss(pricedData, minMax, position):
 		prices.append(positionValue)
 
 	profit = prices[-1] - prices[0]
-	return theoretical.Id.numDataPoints, profit
+	return theoretical.Id.numDataPoints, profit, minMax['drawdown']
 
 
 
@@ -92,19 +93,23 @@ def main():
 		print 'Invalid path %s' % args.datadir
 		return
 
+	statsFh = open('rank.stats.tsv', 'w')
+	header = []
+	header.extend(['tradingDay'])
+	header.extend(['instrument', 'strike', 'expirationDate'])
+	header.extend(['daysToExpire', 's/x'])
+	header.extend(['rank'])
+	header.extend(['numDataPoints', 'p/l', 'drawDown'])
+
+	statsFh.write('\t'.join(header))
+	statsFh.write('\n')
+
 	for root, dirnames, filenames in os.walk(args.datadir):
 		for filename in fnmatch.filter(filenames, 'option_tick_priced.proto'):
 			pricedDataFile = root + "/" + filename
 			print 'Processing file -', pricedDataFile 
 
-			statsFh = open(pricedDataFile + '.stats', 'w')
-			header = []
-			header.extend(['instrument', 'strike', 'expirationDate'])
-			header.extend(['daysToExpire', 's/x', 'numDataPoints'])
-			header.extend(['p/l'])
 
-			statsFh.write('\t'.join(header))
-			statsFh.write('\n')
 			for (optionMeta, pricedData) in getInstrumentIterator(pricedDataFile):
 				if len(pricedData) <= 8:
 					print 'Not enough ticks\n', optionMeta
@@ -116,15 +121,23 @@ def main():
 				for position in createPositions(pricedData):
 					startPosition, endPosition = position
 					stats = computeStats(pricedData[startPosition])
-					for minMax in computeMinMax(pricedData, position):
+
+					topKMinMax = computeMinMax(pricedData, position)
+					if not topKMinMax:
+						continue
+					i = 0
+					for minMax in topKMinMax:
 						metrics = computeProfitLoss(pricedData, minMax, position)
 						output = []
+						i = i + 1
 						output.extend(stats)
+						output.append(i)
 						output.extend(metrics)
 						output = map(lambda x: str(x), output)
 						statsFh.write('\t'.join(output))
 						statsFh.write('\n')
-			statsFh.close()
+						statsFh.flush()
+	statsFh.close()
 
 
 
