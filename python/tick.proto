@@ -4,10 +4,9 @@ option java_package = "com.ncllc.protos";
 option java_outer_classname = "Protos";
 
 enum OptionType {
-        CALL = 1;
-        PUT = 2;
-  }
-
+    CALL = 1;
+    PUT = 2;
+}
 
 
 enum TickPosition{

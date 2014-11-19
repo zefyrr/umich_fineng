@@ -9,10 +9,8 @@ import itertools
 
 
 
-
-
 def main():
-	parser = argparse.ArgumentParser(description="Run analysis")
+	parser = argparse.ArgumentParser(description="Print proto")
 	parser.add_argument('-d', '--datadir', help='location of priced data')
 
 	args = parser.parse_args()
@@ -31,22 +29,16 @@ def main():
 			pricedDataFile = root + "/" + filename
 			print 'opening file', pricedDataFile
 
-			instrumentMetaMap = {}
 			for (optionMeta, pricedData) in getInstrumentIterator(pricedDataFile):
 				for pricedRecord in pricedData:
-					print pricedRecord
-					instrumentMeta = getInstrumentMetaStr(pricedRecord.pairedTick.optionMeta)
-					instrumentMetaMap[instrumentMeta] = instrumentMetaMap.get(instrumentMeta, 0) + 1
+					optionTick = pricedRecord.pairedTick.optionTick
+					print optionTick.timestampStr, optionTick.last
 
-			for key, value in  instrumentMetaMap.items():
-				print "%s - %d" % (key, value)
+
 
 
 if __name__ == "__main__":
     main()
-
-
-
 
 
 

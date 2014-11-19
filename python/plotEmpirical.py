@@ -260,10 +260,7 @@ def main():
 	if not args.datadir:
 		parser.print_help()
 		return
-
-	if not args.option:
-		parser.print_help()
-		return		
+	
 
 	if not os.path.exists(args.datadir):
 		print 'Invalid path %s' % args.datadir
